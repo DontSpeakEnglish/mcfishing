@@ -7,17 +7,14 @@ import pyautogui
 from time import sleep
 
 startYN = False
-home_prompt = ''
-
 def fish_bite_detected(shot, template):
     result = cv2.matchTemplate(template, shot, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, _ = cv2.minMaxLoc(result)
     return max_val > 0.8  # 阈值可以根据实际情况调整
 
-def get_fish(root):
+def get_fish(root, prompt):
     if not startYN:
         return
-
     # 读取鱼上钩的模板图像
     template = cv2.imread('./target_en.png')
 
@@ -27,28 +24,35 @@ def get_fish(root):
 
     # 检测鱼是否上钩
     if fish_bite_detected(shot, template):
-        print('鱼上钩了！进行点击')
+        prompt.configure(text='鱼儿上钩了！\n收钩！收钩！收钩！')
         pyautogui.click(button='right')
-        sleep(4)  # 等待一段时间再进行下一次检测
+        sleep(0.5)
+        prompt.configure(text='等待字幕消失')
+        sleep(3)  # 等待一段时间再进行下一次检测
         pyautogui.click(button='right')
     else:
-        print('等待鱼上钩...')
+        prompt.configure(text='等待鱼儿上钩...')
 
     # 使用root.after来定期调用get_fish
-    root.after(500, get_fish, root)  # 500毫秒（0.5秒）后再次调用get_fish
+    root.after(500, get_fish, root, prompt)  # 500毫秒（0.5秒）后再次调用get_fish
 
-def start_fishing(root, sbutton, ebutton):
+def start_fishing(root, sbutton, ebutton, prompt):
     sbutton.configure(state='disabled', text='已开始...', cursor='circle')
     ebutton.configure(state='normal', cursor='hand2')
     global startYN
     startYN = True
-    get_fish(root)  # 启动get_fish
+    prompt.configure(text='已开始自动钓鱼！')
+    sleep(1)
+    get_fish(root, prompt=prompt)  # 启动get_fish
 
-def end_fishing(sbutton, ebutton):
+def end_fishing(sbutton, ebutton, prompt):
     global startYN
     startYN = False
     sbutton.configure(state='normal', text='开始', cursor='hand2')
     ebutton.configure(state='disabled', text='结束', cursor='circle')
+    prompt.configure(text='已结束自动钓鱼')
+    sleep(1)
+    prompt.configure(text='点击"开始"按钮开始自动钓鱼')
 
 def home_page(frame, root):
     home_label = ttk.Label(frame, text='MC自动钓鱼工具', font=('Arial', 18), anchor='center')
@@ -61,16 +65,15 @@ def home_page(frame, root):
     button_frame = ttk.Frame(frame, height=button_height)
     button_frame.pack(side='top', fill='x', padx=21, pady=15)  # 设置button_frame与上下左右墙壁的距离为20
 
-    start_button = ttk.Button(button_frame, text='开始', command=lambda: start_fishing(root=root, sbutton=start_button, ebutton=end_button), cursor='hand2')
+    start_button = ttk.Button(button_frame, text='开始', command=lambda: start_fishing(root=root, sbutton=start_button, ebutton=end_button, prompt=prompt_label), cursor='hand2')
     start_button.place(x=0, y=0, width=button_width, height=button_height)
 
-    end_button = ttk.Button(button_frame, text='结束', command=lambda: end_fishing(start_button, end_button), state='disabled', cursor='circle')
+    end_button = ttk.Button(button_frame, text='结束', command=lambda: end_fishing(start_button, end_button, prompt_label), state='disabled', cursor='circle')
     end_button.place(x=button_width + 21, y=0, width=button_width, height=button_height)
 
-    home_prompt = '点击"开始"按钮开始自动钓鱼'
     prompt_frame = ttk.Frame(frame, height=120)
     prompt_frame.pack(side='top', fill='both', padx=21, pady=8)
-    prompt_label = tk.Label(prompt_frame, text=home_prompt, font=('Arial', 11), anchor='center', fg='#999999')
+    prompt_label = tk.Label(prompt_frame, text='点击"开始"按钮开始自动钓鱼', font=('Arial', 11), anchor='center', fg='#999999')
     prompt_label.pack(side='left', padx=5)
 
 if __name__ == "__main__":
