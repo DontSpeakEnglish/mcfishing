@@ -6,9 +6,8 @@ import numpy as np
 import pyautogui
 from time import sleep
 
-from weasyprint.css.validation.properties import font_size
-
 startYN = False
+home_prompt = ''
 
 def fish_bite_detected(shot, template):
     result = cv2.matchTemplate(template, shot, cv2.TM_CCOEFF_NORMED)
@@ -38,14 +37,18 @@ def get_fish(root):
     # 使用root.after来定期调用get_fish
     root.after(500, get_fish, root)  # 500毫秒（0.5秒）后再次调用get_fish
 
-def start_fishing(root):
+def start_fishing(root, sbutton, ebutton):
+    sbutton.configure(state='disabled', text='已开始...', cursor='circle')
+    ebutton.configure(state='normal', cursor='hand2')
     global startYN
     startYN = True
     get_fish(root)  # 启动get_fish
 
-def end_fishing():
+def end_fishing(sbutton, ebutton):
     global startYN
     startYN = False
+    sbutton.configure(state='normal', text='开始', cursor='hand2')
+    ebutton.configure(state='disabled', text='结束', cursor='circle')
 
 def home_page(frame, root):
     home_label = ttk.Label(frame, text='MC自动钓鱼工具', font=('Arial', 18), anchor='center')
@@ -58,11 +61,17 @@ def home_page(frame, root):
     button_frame = ttk.Frame(frame, height=button_height)
     button_frame.pack(side='top', fill='x', padx=21, pady=15)  # 设置button_frame与上下左右墙壁的距离为20
 
-    start_button = ttk.Button(button_frame, text='开始', command=lambda: start_fishing(root=root))
+    start_button = ttk.Button(button_frame, text='开始', command=lambda: start_fishing(root=root, sbutton=start_button, ebutton=end_button), cursor='hand2')
     start_button.place(x=0, y=0, width=button_width, height=button_height)
 
-    end_button = ttk.Button(button_frame, text='结束', command=end_fishing)
+    end_button = ttk.Button(button_frame, text='结束', command=lambda: end_fishing(start_button, end_button), state='disabled', cursor='circle')
     end_button.place(x=button_width + 21, y=0, width=button_width, height=button_height)
+
+    home_prompt = '点击"开始"按钮开始自动钓鱼'
+    prompt_frame = ttk.Frame(frame, height=120)
+    prompt_frame.pack(side='top', fill='both', padx=21, pady=8)
+    prompt_label = tk.Label(prompt_frame, text=home_prompt, font=('Arial', 11), anchor='center', fg='#999999')
+    prompt_label.pack(side='left', padx=5)
 
 if __name__ == "__main__":
     # 创建主窗口对象
